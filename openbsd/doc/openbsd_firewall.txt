@@ -1,6 +1,6 @@
 #: Title : OpenBSD Firewall
 #: Author : "Caio Abreu Ferreira" <abreuferr_gmail.com>
-#: Description : servidor firewall
+#: Description : servidor firewall NAT
 #: Options : None
 #: Reference :  
 
@@ -15,32 +15,18 @@ $ /etc/sysctl.conf:
 # Arquivo de configuracao do OpenBSD (PF)
 #
 $ /etc/pf.conf
-    # macros
-    ext_if="em0"
-    int_if="em1"
 
-    tcp_services="{ 22, 113 }"
-    icmp_types="echoreq"
+# Interface externa
+ext_if = "vio0"
 
-    # options
-    set block-policy return
-    set loginterface em0
-    set skip on lo
+# Rede interna
+int_net = "192.168.100.0/24"
 
-    # match rules
-    match out on egress inet from !(egress:network) to any nat-to (egress:0)
+# Configuracao do NAT para traduzir enderecos internos para a interface externa
+match out on $ext_if inet from $int_net to any nat-to ($ext_if) round-robin
 
-    # filter rules
-    block in log
-    pass out quick
-
-    antispoof quick for { lo $int_if }
-
-    pass in on egress inet proto tcp from any to (egress) port $tcp_services
-
-    pass in inet proto icmp all icmp-type $icmp_types
-
-    pass in on $int_if
+# Permitir todo o trafego (sem bloqueios)
+pass all
 
 # Alguns comandos interessantes para auxiliar na configuracao da firewall
 # do OpenBSD
